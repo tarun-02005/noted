@@ -27,9 +27,6 @@ app.secret_key = "another-secret-key"
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
-from flask_migrate import Migrate
-
-migrate = Migrate(app, db)
 
 
 def ist_now():
@@ -226,6 +223,10 @@ def api_delete_note(note_id):
     db.session.commit()
     return jsonify({"msg": "Note deleted"})
 
+from app import app as application
+
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
+    
