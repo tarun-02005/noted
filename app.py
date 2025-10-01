@@ -3,6 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import (
     JWTManager, create_access_token, jwt_required, get_jwt_identity
 )
+from flask_jwt_extended import decode_token
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 import os
@@ -26,6 +29,43 @@ app.secret_key = "another-secret-key"
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
+
+# Helper to check the token in the session
+def check_session_jwt():
+    # 1. Check if 'token' exists in session
+    if 'token' not in session:
+        return False, "No token in session"
+
+    token = session['token']
+    
+    try:
+        # 2. Decode the token to check its validity (signature, expiration)
+        decoded_token = decode_token(token)
+        
+        # 3. Extract the identity (user_id) from the decoded token
+        user_id = decoded_token['sub']
+        
+        # Optionally, you can refresh the token if it's nearing expiration 
+        # or if you want to ensure the session always has a fresh token. 
+        # This is beyond a simple check but a common pattern.
+        
+        # 4. Return success and the user_id
+        return True, user_id
+        
+    except ExpiredSignatureError:
+        # Token is valid but expired
+        session.clear() # Clear the session to force re-login
+        return False, "Token expired"
+    
+    except InvalidTokenError:
+        # Token is malformed or signature is invalid
+        session.clear() 
+        return False, "Invalid token"
+    
+    except Exception as e:
+        # Other potential errors
+        session.clear()
+        return False, f"Token error: {e}"
 
 
 
@@ -84,9 +124,9 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
-            token = create_access_token(identity=user.id)
+            token = create_access_token(identity=str(user.id))
             session['token'] = token
-            session['user_id'] = user.id
+            # session['user_id'] = user.id
             return redirect(url_for('notes'))
         return "Invalid credentials!"
     return render_template("login.html")
@@ -95,10 +135,19 @@ def login():
 @app.route('/notes', methods=['GET', 'POST'])
 # @jwt_required()
 def notes():
-    if 'user_id' not in session:
+    is_valid, user_info = check_session_jwt()
+    
+    if not is_valid:
         return redirect(url_for('login'))
     
-    user_id = session['user_id']
+    try:
+        user_id = int(user_info)
+    except (TypeError, ValueError):
+        # Handle case where user_info isn't a valid ID (shouldn't happen with valid JWT)
+        return "Unauthorized!", 403
+
+    user = User.query.filter_by(id=user_id).first()
+    user_name = user.email if user else "Unknown"
 
     # user_id = get_jwt_identity()
 
@@ -110,16 +159,20 @@ def notes():
         db.session.commit()
 
     notes = Note.query.filter_by(user_id=user_id).all()
-    return render_template("notes.html", notes=notes)
+    return render_template("notes.html", notes=notes, current_user=user_name)
 
 @app.route('/notes/edit/<int:note_id>', methods=['GET', 'POST'])
 def edit_note(note_id):
-    if 'user_id' not in session:
+    is_valid, user_info = check_session_jwt()
+    if not is_valid:
         return redirect(url_for('login'))
+        
+    user_id = int(user_info)
 
     note = Note.query.get_or_404(note_id)
-    if note.user_id != session['user_id']:
-        return "Unauthorized!"
+    # Check if the user ID from the token matches the note's owner
+    if note.user_id != user_id: 
+        return "Unauthorized!", 403
 
     if request.method == 'POST':
         note.title = request.form['title']
@@ -132,12 +185,16 @@ def edit_note(note_id):
 # Delete Note
 @app.route('/notes/delete/<int:note_id>', methods=['POST'])
 def delete_note(note_id):
-    if 'user_id' not in session:
+    is_valid, user_info = check_session_jwt()
+    if not is_valid:
         return redirect(url_for('login'))
+        
+    user_id = int(user_info)
 
     note = Note.query.get_or_404(note_id)
-    if note.user_id != session['user_id']:
-        return "Unauthorized!"
+    # Check if the user ID from the token matches the note's owner
+    if note.user_id != user_id: 
+        return "Unauthorized!", 403
 
     db.session.delete(note)
     db.session.commit()

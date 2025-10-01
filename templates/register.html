@@ -1,24 +1,192 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Register</title>
-    <style>
-        body { font-family: Arial; background: #f2f2f2; }
-        .container { width: 300px; margin: 100px auto; padding: 20px; background: white; border-radius: 10px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; }
-        button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; }
-        a { text-decoration: none; display: block; text-align: center; margin-top: 10px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Register - Notes App</title>
+  <style>
+    /* Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      color: #fff;
+      background: linear-gradient(135deg, #6a11cb, #2575fc, #00c6ff); /* vibrant modern gradient */
+      position: relative;
+    }
+
+    /* Floating Particles */
+    .circles {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      z-index: -1;
+    }
+    .circles li {
+      position: absolute;
+      display: block;
+      list-style: none;
+      width: 20px; height: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      animation: float 25s linear infinite;
+      bottom: -150px;
+      border-radius: 50%;
+    }
+    .circles li:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-duration: 22s; }
+    .circles li:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-duration: 12s; animation-delay: 2s; }
+    .circles li:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-duration: 16s; }
+    .circles li:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-duration: 18s; }
+    .circles li:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-duration: 20s; }
+    .circles li:nth-child(6) { left: 75%; width: 110px; height: 110px; animation-duration: 30s; }
+    .circles li:nth-child(7) { left: 35%; width: 150px; height: 150px; animation-duration: 45s; }
+    .circles li:nth-child(8) { left: 50%; width: 25px; height: 25px; animation-duration: 25s; animation-delay: 5s; }
+    .circles li:nth-child(9) { left: 20%; width: 15px; height: 15px; animation-duration: 15s; animation-delay: 2s; }
+    .circles li:nth-child(10) { left: 85%; width: 150px; height: 150px; animation-duration: 11s; }
+
+    @keyframes float {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; }
+    }
+
+    /* Container */
+    .container {
+      display: flex;
+      width: 90%;
+      max-width: 1100px;
+      margin: auto;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Left Section */
+    .left {
+      flex: 1;
+      color: #fff;
+      padding: 20px;
+    }
+    .left h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      line-height: 1.2;
+      color: #ffdd57;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+    }
+    .left p {
+      font-size: 1.2rem;
+      margin-bottom: 30px;
+      line-height: 1.6;
+      font-style: italic;
+      opacity: 0.95;
+    }
+    .left .info {
+      font-size: 1rem;
+      margin-top: 10px;
+      color: #ddd;
+    }
+
+    /* Right Section - Register Box */
+    .register-box {
+      flex: 1;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      padding: 50px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+      max-width: 450px;
+      width: 100%;
+    }
+    .register-box h2 {
+      margin-bottom: 25px;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+    }
+    .register-box input {
+      width: 100%;
+      padding: 15px;
+      margin: 12px 0;
+      border: none;
+      border-radius: 10px;
+      outline: none;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+    .register-box input::placeholder {
+      color: rgba(255,255,255,0.7);
+    }
+    .register-box button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .register-box button:hover {
+      opacity: 0.9;
+      transform: translateY(-3px);
+    }
+    .register-box a {
+      color: #ddd;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      margin-top: 15px;
+      font-size: 0.95rem;
+    }
+    .register-box a:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .container { flex-direction: column; gap: 30px; }
+      .left { text-align: center; }
+      .register-box { padding: 40px 30px; }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
-    <h2>Register</h2>
-    <form method="POST">
+  <!-- Floating particles -->
+  <ul class="circles">
+    <li></li><li></li><li></li><li></li><li></li>
+    <li></li><li></li><li></li><li></li><li></li>
+  </ul>
+
+  <div class="container">
+    <!-- Left info -->
+    <div class="left">
+      <h1>Join NotesApp ✨</h1>
+      <p>Capture your ideas, organize tasks, and access notes anywhere.  
+      Take control of your productivity with a modern notes experience.</p>
+      <div class="info">Already have an account? <a href="/login" style="color:#fff; text-decoration:underline;">Login here</a></div>
+    </div>
+
+    <!-- Right register box -->
+    <div class="register-box">
+      <h2>Create Account</h2>
+      <form method="POST">
         <input type="email" name="email" placeholder="Email" required />
         <input type="password" name="password" placeholder="Password" required />
         <button type="submit">Register</button>
-    </form>
-    <a href="/login">Already have an account?</a>
-</div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>
